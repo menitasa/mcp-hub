@@ -1,3 +1,5 @@
+![icon.png](assets/icon.png)
+
 # Jamf MCP Server
 
 An MCP server that enables LLMs to interact with Jamf Pro, Protect, and Security Cloud for Apple device management.
@@ -13,6 +15,7 @@ An MCP server that enables LLMs to interact with Jamf Pro, Protect, and Security
 No credentials required to start — the server runs in onboarding mode until configured.
 
 Once configured, ask things like:
+
 - "Find all computers running macOS 15"
 - "Create a smart group for M3 MacBooks"
 - "Show me policies in the Security category"
@@ -21,20 +24,20 @@ See [Installation](docs/INSTALLATION.md) for credential setup.
 
 ## Documentation
 
-| Doc | Description |
-|-----|-------------|
+| Doc                                  | Description                                                 |
+| ------------------------------------ | ----------------------------------------------------------- |
 | [Installation](docs/INSTALLATION.md) | Setup, env vars, client configuration (Claude Desktop, CLI) |
-| [Tools](docs/TOOLS.md) | Complete reference for all 45 MCP tools by product |
-| [Contributing](CONTRIBUTING.md) | Development setup, testing, adding new tools |
+| [Tools](docs/TOOLS.md)               | Complete reference for all 45 MCP tools by product          |
+| [Contributing](CONTRIBUTING.md)      | Development setup, testing, adding new tools                |
 
 ## Supported Products
 
-| Product | Tools | Description |
-|---------|-------|-------------|
-| **Setup** | 2 | Onboarding tools (always available, no credentials needed) |
-| **Jamf Pro** | 37 | Device management, groups, policies, profiles, apps, scripts |
-| **Jamf Protect** | 6 | Security alerts, enrolled computers, analytics (detection rules) |
-| **Jamf Security Cloud** | 2 | Device risk status and overrides via RISK API |
+| Product                 | Tools | Description                                                      |
+| ----------------------- | ----- | ---------------------------------------------------------------- |
+| **Setup**               | 2     | Onboarding tools (always available, no credentials needed)       |
+| **Jamf Pro**            | 37    | Device management, groups, policies, profiles, apps, scripts     |
+| **Jamf Protect**        | 6     | Security alerts, enrolled computers, analytics (detection rules) |
+| **Jamf Security Cloud** | 2     | Device risk status and overrides via RISK API                    |
 
 ## Requirements
 
