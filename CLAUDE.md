@@ -5,10 +5,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Quick Reference Commands
 
 ```bash
-# Run full test suite (41 tests)
+# Run full test suite
 ./run_tests.sh
 # Or directly:
 python3 test_agent.py --output test_report.json
+
+# Generate remediation report from test failures
+python3 remediate.py test_report.json
 
 # Verify all MCP tools have test coverage
 python3 verify_test_coverage.py
@@ -27,36 +30,76 @@ asyncio.run(agent.test_get_computers_list())
 
 ## Architecture Overview
 
-This is an MCP (Model Context Protocol) server that enables LLMs to interact with Jamf Pro's API for Apple device management.
+This is an MCP (Model Context Protocol) server that enables LLMs to interact with Jamf's ecosystem for Apple device management and security.
+
+### Supported Products
+
+| Product | Description | Tools Available |
+|---------|-------------|-----------------|
+| **Jamf Pro** | Core device management for macOS, iOS/iPadOS, and tvOS | 37 tools |
+| **Jamf Protect** | Endpoint security for threat detection and response | 6 tools |
+| **Jamf Security Cloud** | Device risk management via RISK API | 2 tools |
+| **Setup** | Zero-credential onboarding (always available) | 2 tools |
 
 ### Core Flow
 
 ```
-Claude (MCP Client) → FastMCP Server (server.py) → Tool Functions (tools/*.py) → JamfClient (client.py) → Jamf Pro API
+Claude (MCP Client) → FastMCP Server (server.py) → Tool Functions (tools/*.py) → Client → Jamf API
+
+Product-Specific Clients:
+- JamfClient (client.py) → Jamf Pro API
+- ProtectClient (protect_client.py) → Jamf Protect API
+- JamfSecurityClient (security_client.py) → Jamf Security Cloud API
 ```
 
 ### Key Components
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| MCP Server | `src/jamf_mcp/server.py` | FastMCP entry point, tool registration with `@mcp.tool()` |
-| API Client | `src/jamf_mcp/client.py` | HTTP client with methods for Classic (`/JSSResource`), v1, v2, v3 APIs |
-| Auth | `src/jamf_mcp/auth.py` | OAuth client credentials flow |
+| MCP Server | `src/jamf_mcp/server.py` | FastMCP entry point, lifespan management, client initialization |
+| Tool Registry | `src/jamf_mcp/tools/_registry.py` | Decorator system (`@jamf_tool`) for automatic tool registration |
 | Tool Modules | `src/jamf_mcp/tools/*.py` | Domain-specific tool implementations |
-| Test Agent | `test_agent.py` | Integration tests against live Jamf Pro instance |
+| Jamf Pro Client | `src/jamf_mcp/client.py` | HTTP client for Jamf Pro (Classic, v1, v2, v3 APIs) |
+| Jamf Pro Auth | `src/jamf_mcp/auth.py` | OAuth client credentials flow for Jamf Pro |
+| Protect Client | `src/jamf_mcp/protect_client.py` | HTTP client for Jamf Protect API |
+| Protect Auth | `src/jamf_mcp/protect_auth.py` | Basic auth for Jamf Protect |
+| Security Client | `src/jamf_mcp/security_client.py` | HTTP client for Jamf Security Cloud (RISK API) |
+| Security Auth | `src/jamf_mcp/security_auth.py` | Bearer token auth for Security Cloud |
+| Test Agent | `test_agent.py` | Integration tests against live Jamf instances |
+| Coverage Verification | `verify_test_coverage.py` | Ensures all tools have corresponding tests |
+| Auto-Remediation | `remediate.py` | Generates remediation reports from test failures |
 
-### API Architecture
+### Jamf Pro API Architecture
 
 The Jamf Pro API uses different versions for different resources:
 
 | API | Endpoint Pattern | Format | Used For |
 |-----|------------------|--------|----------|
-| Classic | `/JSSResource/...` | XML for POST/PUT | Users, groups, policies, profiles |
+| Classic | `/JSSResource/...` | XML for POST/PUT, JSON for GET | Users, groups, policies, profiles |
 | v1 | `/api/v1/...` | JSON | Computers, scripts, categories, app installers |
 | v2 | `/api/v2/...` | JSON | Mobile devices, mobile device prestages |
 | v3 | `/api/v3/...` | JSON | Computer prestages |
 
-The `JamfClient` class provides methods for each: `classic_get()`, `classic_post()`, `v1_get()`, `v1_post()`, `v2_get()`, `v3_get()`, etc.
+The `JamfClient` class in `client.py` provides methods for each API version:
+- Classic: `classic_get()`, `classic_post()`, `classic_put()`, `classic_delete()`
+- Modern APIs: `v1_get()`, `v1_post()`, `v1_put()`, `v1_patch()`, `v1_delete()`, `v2_get()`, etc.
+
+### Tool Registration System
+
+Tools are registered using the `@jamf_tool` decorator from `_registry.py`:
+
+```python
+from ._registry import jamf_tool
+
+@jamf_tool
+async def jamf_your_tool_name(param: str) -> str:
+    """Docstring becomes the MCP tool description."""
+    client = get_client()
+    result = await client.v1_get("/endpoint")
+    return format_response(result, "Success message")
+```
+
+The decorator automatically collects all tools, and `register_all_tools()` in `server.py` registers them with FastMCP during server startup.
 
 ## Critical Rules
 
@@ -66,6 +109,8 @@ Run tests before considering work complete:
 ```bash
 ./run_tests.sh
 ```
+
+This script runs the test suite and automatically generates a remediation report (`remediation_report.json`) if tests fail. The report maps failed tests to the source files that need fixing.
 
 ### Adding a New MCP Tool
 
@@ -224,6 +269,8 @@ When creating multiple dependent resources, follow this order:
 
 ### Remediation Map
 
+**Jamf Pro Tools:**
+
 | Test Category | Primary File | Secondary |
 |---------------|--------------|-----------|
 | Authentication | `auth.py` | `.env` credentials |
@@ -242,6 +289,20 @@ When creating multiple dependent resources, follow this order:
 | Apps (Mac/Mobile/eBooks/etc) | `tools/apps.py` | `client.py` |
 | API Roles | `tools/api_roles.py` | `client.py` |
 
+**Jamf Protect Tools:**
+
+| Test Category | Primary File | Secondary |
+|---------------|--------------|-----------|
+| Protect Alerts | `tools/protect_alerts.py` | `protect_client.py`, `protect_auth.py` |
+| Protect Computers | `tools/protect_computers.py` | `protect_client.py` |
+| Protect Analytics | `tools/protect_analytics.py` | `protect_client.py` |
+
+**Jamf Security Cloud Tools:**
+
+| Test Category | Primary File | Secondary |
+|---------------|--------------|-----------|
+| Risk Management | `tools/risk.py` | `security_client.py`, `security_auth.py` |
+
 ### Common Errors
 
 | Error | Cause | Fix |
@@ -253,9 +314,40 @@ When creating multiple dependent resources, follow this order:
 
 ## Environment Variables
 
-Required in `.env`:
-```
+### Zero-Credential Startup
+
+The server starts with **no credentials required**. Setup tools (`jamf_get_setup_status`, `jamf_configure_help`) are always available to help users configure products. Product-specific tools return helpful error messages when their product is not configured.
+
+### Jamf Pro (Optional)
+
+```bash
 JAMF_PRO_URL=https://yourcompany.jamfcloud.com
-JAMF_PRO_CLIENT_ID=your-client-id
-JAMF_PRO_CLIENT_SECRET=your-client-secret
+JAMF_PRO_CLIENT_ID=your-api-client-id
+JAMF_PRO_CLIENT_SECRET=your-api-client-secret
 ```
+
+**Setup:** Settings > System > API Roles and Clients in Jamf Pro
+
+### Jamf Protect (Optional)
+
+```bash
+JAMF_PROTECT_URL=https://your-tenant.protect.jamfcloud.com
+JAMF_PROTECT_CLIENT_ID=your-client-id
+JAMF_PROTECT_PASSWORD=your-password
+```
+
+**Setup:** Use Jamf Protect tenant credentials
+
+### Jamf Security Cloud (Optional)
+
+```bash
+JAMF_SECURITY_URL=https://risk-api.jamf.com
+JAMF_SECURITY_APP_ID=your-app-id
+JAMF_SECURITY_APP_SECRET=your-app-secret
+```
+
+**Setup:** Obtain RISK API credentials from Jamf Security Cloud
+
+### Configuration Helper
+
+Use `jamf_configure_help(product="jamf_pro")` to get detailed setup instructions for any product from within Claude.
