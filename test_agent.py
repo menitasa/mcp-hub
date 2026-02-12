@@ -1579,6 +1579,137 @@ class JamfTestAgent:
         )
 
     # =========================================================================
+    # PRINTERS TESTS
+    # =========================================================================
+
+    async def test_get_printers(self) -> TestResult:
+        """Test getting printers list"""
+        status, data = await self._api_request("GET", "/JSSResource/printers")
+
+        printers = data.get("printers", [])
+        if printers:
+            self.samples["printer_id"] = printers[0].get("id")
+
+        return TestResult(
+            name="Get Printers (List)",
+            category="Printers",
+            status=TestStatus.PASSED,
+            response_code=status,
+            message=f"Retrieved {len(printers)} printers",
+            details={"count": len(printers)}
+        )
+
+    async def test_create_printer(self) -> TestResult:
+        """Test creating a printer, stores ID for subsequent tests"""
+        printer_name = f"_MCP_Test_Printer_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+
+        printer_data = {
+            "printer": {
+                "name": printer_name,
+                "uri": "lpd://10.0.0.1/",
+                "model": "Test Printer Model",
+            }
+        }
+
+        _, data = await self._api_request(
+            "POST", "/JSSResource/printers/id/0",
+            data=printer_data
+        )
+
+        printer_id = data.get("id")
+        if printer_id:
+            self.samples["test_printer_id"] = printer_id
+
+        return TestResult(
+            name="Create Printer",
+            category="Printers",
+            status=TestStatus.PASSED,
+            response_code=201,
+            message=f"Created: {printer_name} (ID: {printer_id})"
+        )
+
+    async def test_get_printer_detail(self) -> TestResult:
+        """Test getting a specific printer by ID"""
+        printer_id = self.samples.get("test_printer_id") or self.samples.get("printer_id")
+        if not printer_id:
+            return TestResult(
+                name="Get Printer (Detail)",
+                category="Printers",
+                status=TestStatus.SKIPPED,
+                message="No printer ID available"
+            )
+
+        status, data = await self._api_request(
+            "GET", f"/JSSResource/printers/id/{printer_id}"
+        )
+
+        printer = data.get("printer", {})
+        printer_name = printer.get("name", "Unknown")
+
+        return TestResult(
+            name="Get Printer (Detail)",
+            category="Printers",
+            status=TestStatus.PASSED,
+            response_code=status,
+            message=f"Retrieved printer: {printer_name}",
+            details={"id": printer_id, "name": printer_name}
+        )
+
+    async def test_update_printer(self) -> TestResult:
+        """Test updating a printer"""
+        printer_id = self.samples.get("test_printer_id")
+        if not printer_id:
+            return TestResult(
+                name="Update Printer",
+                category="Printers",
+                status=TestStatus.SKIPPED,
+                message="No test printer ID available"
+            )
+
+        update_data = {
+            "printer": {
+                "notes": "Updated by MCP test agent"
+            }
+        }
+
+        status, _ = await self._api_request(
+            "PUT", f"/JSSResource/printers/id/{printer_id}",
+            data=update_data
+        )
+
+        return TestResult(
+            name="Update Printer",
+            category="Printers",
+            status=TestStatus.PASSED,
+            response_code=status,
+            message=f"Updated printer ID {printer_id}"
+        )
+
+    async def test_delete_printer(self) -> TestResult:
+        """Test deleting a printer (cleans up test printer)"""
+        printer_id = self.samples.get("test_printer_id")
+        if not printer_id:
+            return TestResult(
+                name="Delete Printer",
+                category="Printers",
+                status=TestStatus.SKIPPED,
+                message="No test printer ID available"
+            )
+
+        await asyncio.sleep(0.5)
+        status, _ = await self._api_request(
+            "DELETE", f"/JSSResource/printers/id/{printer_id}"
+        )
+
+        return TestResult(
+            name="Delete Printer",
+            category="Printers",
+            status=TestStatus.PASSED,
+            response_code=status,
+            message=f"Deleted printer ID {printer_id}"
+        )
+
+    # =========================================================================
     # CATEGORIES TESTS
     # =========================================================================
 
@@ -2184,6 +2315,13 @@ class JamfTestAgent:
             ("Buildings/Departments", [
                 ("Get Buildings (List)", self.test_get_buildings),
                 ("Get Departments (List)", self.test_get_departments),
+            ]),
+            ("Printers", [
+                ("Get Printers (List)", self.test_get_printers),
+                ("Create Printer", self.test_create_printer),
+                ("Get Printer (Detail)", self.test_get_printer_detail),
+                ("Update Printer", self.test_update_printer),
+                ("Delete Printer", self.test_delete_printer),
             ]),
             ("Categories", [
                 ("Get Categories (List)", self.test_get_categories),

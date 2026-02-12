@@ -83,6 +83,11 @@ TOOL_TEST_MAPPING = {
     "jamf_create_category": ["test_create_category"],
     "jamf_get_buildings": ["test_get_buildings"],
     "jamf_get_departments": ["test_get_departments"],
+    # Printers
+    "jamf_get_printers": ["test_get_printers", "test_get_printer_detail"],
+    "jamf_create_printer": ["test_create_printer"],
+    "jamf_update_printer": ["test_update_printer"],
+    "jamf_delete_printer": ["test_delete_printer"],
     "jamf_get_prestages": ["test_get_computer_prestages", "test_get_mobile_device_prestages"],
     "jamf_get_mac_apps": ["test_get_mac_apps"],
     "jamf_get_mobile_device_apps": ["test_get_mobile_device_apps"],
@@ -122,7 +127,7 @@ def get_registered_tools() -> list[MCPTool]:
         sys.path.insert(0, str(Path(__file__).parent / "src"))
         from jamf_mcp.tools import get_registered_tools as get_tools
         tools = get_tools()
-        return [MCPTool(name=t.__name__, module=t.__module__) for t in tools]
+        return [MCPTool(name=func.__name__, module=func.__module__) for func, _ in tools]
     except ImportError as e:
         print(f"{Colors.RED}Error importing tools: {e}{Colors.ENDC}")
         print(f"{Colors.DIM}Make sure dependencies are installed: uv sync{Colors.ENDC}")

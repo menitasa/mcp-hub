@@ -52,6 +52,7 @@ from . import locations
 from . import mobile_devices
 from . import policies
 from . import prestages
+from . import printers
 from . import profiles
 from . import risk
 from . import scripts

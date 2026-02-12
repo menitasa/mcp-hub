@@ -27,9 +27,15 @@ async def jamf_get_app_installer_titles(
     that can be deployed as App Installers. These are pre-packaged applications
     maintained by Jamf for easy deployment.
 
+    IMPORTANT: Use short, simple search terms (e.g., "Firefox" not "Mozilla Firefox",
+    "Chrome" not "Google Chrome"). The search performs a contains match so partial
+    names work well. If the search returns multiple results, present the list to the
+    user and ask them to pick the correct one before proceeding with deployment.
+
     Args:
-        title_name: Filter by app title name (partial match, e.g., "Brave", "Chrome")
-        publisher: Filter by publisher name (partial match, e.g., "Microsoft", "Adobe")
+        title_name: Filter by app title name (contains match, e.g., "Firefox", "Chrome", "Slack").
+            Use short keywords for best results - the search matches anywhere in the title name.
+        publisher: Filter by publisher name (contains match, e.g., "Microsoft", "Adobe")
         page: Page number for pagination (0-indexed, default: 0)
         page_size: Number of results per page (default: 100, max: 999)
 
@@ -46,9 +52,9 @@ async def jamf_get_app_installer_titles(
 
         filters = []
         if title_name:
-            filters.append(f'titleName=="{title_name}*"')
+            filters.append(f'titleName=="*{title_name}*"')
         if publisher:
-            filters.append(f'publisher=="{publisher}*"')
+            filters.append(f'publisher=="*{publisher}*"')
         if filters:
             params["filter"] = ";".join(filters)
 
@@ -136,6 +142,10 @@ async def jamf_create_app_installer_deployment(
     Creates a new App Installer deployment to deploy a Jamf App Catalog
     software title to devices in a smart group.
 
+    IMPORTANT: Before creating a deployment, always use jamf_get_app_installer_titles()
+    to search for the app first. If the search returns multiple matches, present the
+    list to the user and ask them to confirm which app title to deploy.
+
     Args:
         name: Deployment name (required)
         app_title_id: App title ID from jamf_get_app_installer_titles (required)
@@ -202,9 +212,13 @@ async def jamf_get_app_installers(
     - jamf_get_app_installer_titles() for available titles
     - jamf_get_app_installer_deployments() for existing deployments
 
+    IMPORTANT: Use short, simple search terms (e.g., "Firefox" not "Mozilla Firefox").
+    The search does a contains match. If multiple results are returned, present them
+    to the user and ask which one they want before proceeding.
+
     Args:
         app_id: Specific deployment ID to retrieve
-        name: Filter by app name (partial match)
+        name: Filter by app name (contains match, use short keywords like "Firefox", "Slack")
         page: Page number for pagination (0-indexed, default: 0)
         page_size: Number of results per page (default: 100)
 

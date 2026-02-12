@@ -3,6 +3,7 @@
 ## Table of Contents
 
 - [Prerequisites](#prerequisites)
+- [Automated Setup (Recommended)](#automated-setup-recommended)
 - [Quick Start (Zero-Credential)](#quick-start-zero-credential)
 - [Installation](#installation)
 - [Running the Server Manually (Optional)](#running-the-server-manually-optional)
@@ -27,9 +28,45 @@
 
 ---
 
+## Automated Setup (Recommended)
+
+The `setup.sh` script handles everything — creating API credentials in Jamf Pro and configuring Claude Desktop — in a single interactive walkthrough.
+
+### Prerequisites
+
+- `curl` (pre-installed on macOS)
+- [`uv`](https://github.com/astral-sh/uv) — install with: `curl -LsSf https://astral.sh/uv/install.sh | sh`
+- A Jamf Pro admin account (used once to create API credentials, then discarded)
+
+### Running Setup
+
+```bash
+cd /path/to/mcp-hub
+bash setup.sh
+```
+
+### What It Does
+
+1. **Prompts for your Jamf Pro URL and admin credentials** (credentials are used only during setup and cleared immediately after)
+2. **Authenticates** to Jamf Pro and fetches available API privileges
+3. **Lets you choose privilege scope** — either all privileges (recommended) or pick categories individually (Computers, Mobile Devices, Policies, etc.)
+4. **Creates an API Role** in Jamf Pro with the selected privileges
+5. **Creates an API Integration** linked to that role
+6. **Generates client credentials** (Client ID + Client Secret)
+7. **Writes the Claude Desktop config** (`~/Library/Application Support/Claude/claude_desktop_config.json`), preserving any existing MCP servers you already have configured
+
+### After Setup
+
+1. **Restart Claude Desktop** (or your MCP client)
+2. Ask Claude: **"What's the setup status?"** to verify connectivity
+
+> **Note:** If you already have a `claude_desktop_config.json` with other MCP servers, the script will detect them and ask how to merge — it won't overwrite your existing configuration.
+
+---
+
 ## Quick Start (Zero-Credential)
 
-The server starts with **zero credentials required**. Use the built-in setup tools to get started:
+If you prefer manual configuration, the server starts with **zero credentials required**. Use the built-in setup tools to get started:
 
 1. **Configure your MCP client** (see [Client Configuration](#client-configuration) below)
 2. **Restart your MCP client** — it automatically starts the server for you
@@ -202,6 +239,8 @@ export JAMF_PRODUCTS="pro,protect"
 ---
 
 ## Setting Up API Credentials in Jamf Pro
+
+> **Tip:** The [automated setup script](#automated-setup-recommended) handles these steps for you. The manual steps below are provided as reference.
 
 1. Log in to Jamf Pro
 2. Navigate to **Settings > System > API Roles and Clients**

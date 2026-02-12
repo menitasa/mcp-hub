@@ -6,6 +6,25 @@ An MCP server that enables LLMs to interact with Jamf Pro, Protect, and Security
 
 ## Quick Start
 
+### Automated Setup (Recommended)
+
+The setup script creates API credentials in Jamf Pro and configures Claude Desktop automatically:
+
+```bash
+cd /path/to/mcp-hub
+bash setup.sh
+```
+
+The script will:
+1. Prompt for your Jamf Pro URL and admin credentials
+2. Create an API Role and Integration with the right privileges
+3. Generate client credentials (ID + secret)
+4. Write the Claude Desktop config file for you
+
+After setup, restart Claude Desktop and you're ready to go.
+
+### Manual Setup
+
 1. **Configure your MCP client** (see [Installation](docs/INSTALLATION.md))
 2. **Restart your client** — it automatically starts the server
 3. **Ask Claude** for help:
@@ -14,13 +33,15 @@ An MCP server that enables LLMs to interact with Jamf Pro, Protect, and Security
 
 No credentials required to start — the server runs in onboarding mode until configured.
 
+### Try It Out
+
 Once configured, ask things like:
 
 - "Find all computers running macOS 15"
 - "Create a smart group for M3 MacBooks"
 - "Show me policies in the Security category"
 
-See [Installation](docs/INSTALLATION.md) for credential setup.
+See [Installation](docs/INSTALLATION.md) for full configuration details.
 
 ## Documentation
 
