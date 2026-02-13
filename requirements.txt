@@ -1,0 +1,16 @@
+# Jamf Pro MCP Server Dependencies
+# Install with: pip install -r requirements.txt
+
+# MCP SDK
+mcp>=1.0.0
+
+# HTTP client for async API requests
+httpx>=0.27.0
+
+# Data validation
+pydantic>=2.0.0
+
+# Development dependencies (optional)
+# pytest>=8.0.0
+# pytest-asyncio>=0.23.0
+# ruff>=0.3.0
