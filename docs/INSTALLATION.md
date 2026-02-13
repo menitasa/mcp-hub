@@ -255,7 +255,8 @@ export JAMF_PRODUCTS="pro,protect"
    | Read Departments                          | Department lookup                          |
    | Read Computer PreStage Enrollments        | Computer PreStage lookup                   |
    | Read Mobile Device PreStage Enrollments   | Mobile device PreStage lookup              |
-   | Read Mac Applications                     | Mac App Store app lookup                   |
+   | Read Mac Applications                     | Mac app lookup                             |
+   | Create Mac Applications                   | Mac app creation                           |
    | Read Mobile Device Applications           | Mobile app lookup                          |
    | Read eBooks                               | eBook lookup                               |
    | Read Restricted Software                  | Restricted software lookup                 |
