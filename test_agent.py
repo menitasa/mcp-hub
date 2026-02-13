@@ -1685,30 +1685,6 @@ class JamfTestAgent:
             message=f"Updated printer ID {printer_id}"
         )
 
-    async def test_delete_printer(self) -> TestResult:
-        """Test deleting a printer (cleans up test printer)"""
-        printer_id = self.samples.get("test_printer_id")
-        if not printer_id:
-            return TestResult(
-                name="Delete Printer",
-                category="Printers",
-                status=TestStatus.SKIPPED,
-                message="No test printer ID available"
-            )
-
-        await asyncio.sleep(0.5)
-        status, _ = await self._api_request(
-            "DELETE", f"/JSSResource/printers/id/{printer_id}"
-        )
-
-        return TestResult(
-            name="Delete Printer",
-            category="Printers",
-            status=TestStatus.PASSED,
-            response_code=status,
-            message=f"Deleted printer ID {printer_id}"
-        )
-
     # =========================================================================
     # CATEGORIES TESTS
     # =========================================================================
@@ -2321,7 +2297,6 @@ class JamfTestAgent:
                 ("Create Printer", self.test_create_printer),
                 ("Get Printer (Detail)", self.test_get_printer_detail),
                 ("Update Printer", self.test_update_printer),
-                ("Delete Printer", self.test_delete_printer),
             ]),
             ("Categories", [
                 ("Get Categories (List)", self.test_get_categories),

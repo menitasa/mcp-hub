@@ -108,7 +108,7 @@ Core device management tools for macOS, iOS/iPadOS, and tvOS devices.
 | `jamf_get_printers` | Get printers or printer details by ID |
 | `jamf_create_printer` | Create a new printer |
 | `jamf_update_printer` | Update an existing printer by ID |
-| `jamf_delete_printer` | Delete a printer by ID |
+
 
 ## API Administration
 

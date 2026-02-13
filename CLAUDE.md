@@ -36,7 +36,7 @@ This is an MCP (Model Context Protocol) server that enables LLMs to interact wit
 
 | Product | Description | Tools Available |
 |---------|-------------|-----------------|
-| **Jamf Pro** | Core device management for macOS, iOS/iPadOS, and tvOS | 37 tools |
+| **Jamf Pro** | Core device management for macOS, iOS/iPadOS, and tvOS | 40 tools |
 | **Jamf Protect** | Endpoint security for threat detection and response | 6 tools |
 | **Jamf Security Cloud** | Device risk management via RISK API | 2 tools |
 | **Setup** | Zero-credential onboarding (always available) | 2 tools |
@@ -120,6 +120,7 @@ This script runs the test suite and automatically generates a remediation report
 4. Add test in `test_agent.py` and include in `run_all_tests()` test_plan
 5. Add tool-to-test mapping in `TOOL_TEST_MAPPING` in `verify_test_coverage.py`
 6. Update README.md "Available Tools" section
+7. Add required Jamf Pro API privileges to `docs/INSTALLATION.md` (use exact privilege names from Jamf Pro, e.g., "Read Computers", "Create Smart Computer Groups")
 
 ### Removing a Tool
 

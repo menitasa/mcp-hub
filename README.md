@@ -6,25 +6,6 @@ An MCP server that enables LLMs to interact with Jamf Pro, Protect, and Security
 
 ## Quick Start
 
-### Automated Setup (Recommended)
-
-The setup script creates API credentials in Jamf Pro and configures Claude Desktop automatically:
-
-```bash
-cd /path/to/mcp-hub
-bash setup.sh
-```
-
-The script will:
-1. Prompt for your Jamf Pro URL and admin credentials
-2. Create an API Role and Integration with the right privileges
-3. Generate client credentials (ID + secret)
-4. Write the Claude Desktop config file for you
-
-After setup, restart Claude Desktop and you're ready to go.
-
-### Manual Setup
-
 1. **Configure your MCP client** (see [Installation](docs/INSTALLATION.md))
 2. **Restart your client** — it automatically starts the server
 3. **Ask Claude** for help:
@@ -48,17 +29,17 @@ See [Installation](docs/INSTALLATION.md) for full configuration details.
 | Doc                                  | Description                                                 |
 | ------------------------------------ | ----------------------------------------------------------- |
 | [Installation](docs/INSTALLATION.md) | Setup, env vars, client configuration (Claude Desktop, CLI) |
-| [Tools](docs/TOOLS.md)               | Complete reference for all 45 MCP tools by product          |
+| [Tools](docs/TOOLS.md)               | Complete reference for all 50 MCP tools by product          |
 | [Contributing](CONTRIBUTING.md)      | Development setup, testing, adding new tools                |
 
 ## Supported Products
 
-| Product                 | Tools | Description                                                      |
-| ----------------------- | ----- | ---------------------------------------------------------------- |
-| **Setup**               | 2     | Onboarding tools (always available, no credentials needed)       |
-| **Jamf Pro**            | 37    | Device management, groups, policies, profiles, apps, scripts     |
-| **Jamf Protect**        | 6     | Security alerts, enrolled computers, analytics (detection rules) |
-| **Jamf Security Cloud** | 2     | Device risk status and overrides via RISK API                    |
+| Product                 | Tools | Description                                                            |
+| ----------------------- | ----- | ---------------------------------------------------------------------- |
+| **Setup**               | 2     | Onboarding tools (always available, no credentials needed)             |
+| **Jamf Pro**            | 40    | Device management, groups, policies, profiles, apps, scripts, printers |
+| **Jamf Protect**        | 6     | Security alerts, enrolled computers, analytics (detection rules)       |
+| **Jamf Security Cloud** | 2     | Device risk status and overrides via RISK API                          |
 
 ## Requirements
 

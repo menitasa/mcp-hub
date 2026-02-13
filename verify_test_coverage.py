@@ -87,7 +87,6 @@ TOOL_TEST_MAPPING = {
     "jamf_get_printers": ["test_get_printers", "test_get_printer_detail"],
     "jamf_create_printer": ["test_create_printer"],
     "jamf_update_printer": ["test_update_printer"],
-    "jamf_delete_printer": ["test_delete_printer"],
     "jamf_get_prestages": ["test_get_computer_prestages", "test_get_mobile_device_prestages"],
     "jamf_get_mac_apps": ["test_get_mac_apps"],
     "jamf_get_mobile_device_apps": ["test_get_mobile_device_apps"],

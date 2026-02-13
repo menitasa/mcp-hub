@@ -3,7 +3,6 @@
 ## Table of Contents
 
 - [Prerequisites](#prerequisites)
-- [Automated Setup (Recommended)](#automated-setup-recommended)
 - [Quick Start (Zero-Credential)](#quick-start-zero-credential)
 - [Installation](#installation)
 - [Running the Server Manually (Optional)](#running-the-server-manually-optional)
@@ -11,7 +10,10 @@
   - [Jamf Pro (Optional)](#jamf-pro-optional)
   - [Jamf Protect (Optional)](#jamf-protect-optional)
   - [Jamf Security Cloud (Optional)](#jamf-security-cloud-optional)
-- [Jamf Pro API Setup](#setting-up-api-credentials-in-jamf-pro)
+- [Setting Up API Credentials](#setting-up-api-credentials)
+  - [Jamf Pro](#jamf-pro)
+  - [Jamf Protect](#jamf-protect)
+  - [Jamf Security Cloud](#jamf-security-cloud)
 - [Client Configuration](#client-configuration)
   - [Claude Desktop (macOS)](#claude-desktop-macos)
   - [Claude Desktop (Windows)](#claude-desktop-windows)
@@ -28,45 +30,9 @@
 
 ---
 
-## Automated Setup (Recommended)
-
-The `setup.sh` script handles everything — creating API credentials in Jamf Pro and configuring Claude Desktop — in a single interactive walkthrough.
-
-### Prerequisites
-
-- `curl` (pre-installed on macOS)
-- [`uv`](https://github.com/astral-sh/uv) — install with: `curl -LsSf https://astral.sh/uv/install.sh | sh`
-- A Jamf Pro admin account (used once to create API credentials, then discarded)
-
-### Running Setup
-
-```bash
-cd /path/to/mcp-hub
-bash setup.sh
-```
-
-### What It Does
-
-1. **Prompts for your Jamf Pro URL and admin credentials** (credentials are used only during setup and cleared immediately after)
-2. **Authenticates** to Jamf Pro and fetches available API privileges
-3. **Lets you choose privilege scope** — either all privileges (recommended) or pick categories individually (Computers, Mobile Devices, Policies, etc.)
-4. **Creates an API Role** in Jamf Pro with the selected privileges
-5. **Creates an API Integration** linked to that role
-6. **Generates client credentials** (Client ID + Client Secret)
-7. **Writes the Claude Desktop config** (`~/Library/Application Support/Claude/claude_desktop_config.json`), preserving any existing MCP servers you already have configured
-
-### After Setup
-
-1. **Restart Claude Desktop** (or your MCP client)
-2. Ask Claude: **"What's the setup status?"** to verify connectivity
-
-> **Note:** If you already have a `claude_desktop_config.json` with other MCP servers, the script will detect them and ask how to merge — it won't overwrite your existing configuration.
-
----
-
 ## Quick Start (Zero-Credential)
 
-If you prefer manual configuration, the server starts with **zero credentials required**. Use the built-in setup tools to get started:
+The server starts with **zero credentials required**. Use the built-in setup tools to get started:
 
 1. **Configure your MCP client** (see [Client Configuration](#client-configuration) below)
 2. **Restart your MCP client** — it automatically starts the server for you
@@ -238,26 +204,104 @@ export JAMF_PRODUCTS="pro,protect"
 
 ---
 
-## Setting Up API Credentials in Jamf Pro
+## Setting Up API Credentials
 
-> **Tip:** The [automated setup script](#automated-setup-recommended) handles these steps for you. The manual steps below are provided as reference.
+### Jamf Pro
 
 1. Log in to Jamf Pro
 2. Navigate to **Settings > System > API Roles and Clients**
-3. **Create an API Role** with permissions:
+3. **Create an API Role** with the permissions you need:
 
-   | Resource | Permissions |
-   |----------|-------------|
-   | Computers | Read, Update |
-   | Mobile Devices | Read, Update |
-   | Users | Read, Update |
-   | Smart/Static Computer Groups | Read, Create |
-   | Smart/Static Mobile Device Groups | Read, Create |
-   | Policies, Configuration Profiles, Scripts | Read |
-   | Extension Attributes, Categories | Read, Create |
+   | Privilege | Used By |
+   |-----------|---------|
+   | Read Computers | Computer inventory lookup |
+   | Update Computers | Computer inventory updates |
+   | Read Mobile Devices | Mobile device inventory lookup |
+   | Update Mobile Devices | Mobile device inventory updates |
+   | Read User | User lookup |
+   | Update User | User updates |
+   | Read Smart Computer Groups | Computer smart group lookup |
+   | Create Smart Computer Groups | Computer smart group creation |
+   | Read Static Computer Groups | Computer static group lookup |
+   | Create Static Computer Groups | Computer static group creation |
+   | Read Smart Mobile Device Groups | Mobile smart group lookup |
+   | Create Smart Mobile Device Groups | Mobile smart group creation |
+   | Read Static Mobile Device Groups | Mobile static group lookup |
+   | Create Static Mobile Device Groups | Mobile static group creation |
+   | Read Policies | Policy lookup |
+   | Read macOS Configuration Profiles | macOS profile lookup |
+   | Read iOS Configuration Profiles | iOS/iPadOS profile lookup |
+   | Read Scripts | Script lookup |
+   | Read Computer Extension Attributes | Computer extension attribute lookup |
+   | Create Computer Extension Attributes | Computer extension attribute creation |
+   | Read Mobile Device Extension Attributes | Mobile device extension attribute lookup |
+   | Create Mobile Device Extension Attributes | Mobile device extension attribute creation |
+   | Read User Extension Attributes | User extension attribute lookup |
+   | Create User Extension Attributes | User extension attribute creation |
+   | Read Categories | Category lookup |
+   | Create Categories | Category creation |
+   | Read Buildings | Building lookup |
+   | Read Departments | Department lookup |
+   | Read Computer PreStage Enrollments | Computer PreStage lookup |
+   | Read Mobile Device PreStage Enrollments | Mobile device PreStage lookup |
+   | Read Mac Applications | Mac App Store app lookup |
+   | Read Mobile Device Applications | Mobile app lookup |
+   | Read eBooks | eBook lookup |
+   | Read Restricted Software | Restricted software lookup |
+   | Read Patch Policies | Patch policy lookup |
+   | Read API Roles | API role lookup |
+   | Create API Roles | API role creation |
+   | Read API Integrations | API integration lookup |
+   | Create API Integrations | API integration creation |
+   | Read Printers | Printer lookup |
+   | Create Printers | Printer creation |
+   | Update Printers | Printer updates |
 
-4. **Create an API Client** and assign the role
-5. Copy the **Client ID** and generate a **Client Secret**
+   > **Tip:** For full functionality, grant all **Read** privileges above and add the **Create/Update/Delete** privileges for resources you want to modify. You can start broad and narrow down later.
+
+   > **Note:** App Installer tools (`jamf_get_app_installer_titles`, `jamf_create_app_installer_deployment`) use the `/api/v1/app-installers` endpoint. There is no dedicated "App Installers" privilege in the API Roles UI — these endpoints are accessible with standard API client access.
+
+4. **Create an API Integration**:
+   - Click **New** under API Integrations
+   - Give it a name (e.g., "Jamf MCP")
+   - Assign the API Role you created
+   - Enable the integration
+5. **Generate credentials**:
+   - Copy the **Client ID**
+   - Click **Generate Client Secret** and copy the secret
+
+   > **Important:** The client secret is only shown once. Store it securely.
+
+6. Set the environment variables:
+   ```
+   JAMF_PRO_URL=https://yourcompany.jamfcloud.com
+   JAMF_PRO_CLIENT_ID=<your-client-id>
+   JAMF_PRO_CLIENT_SECRET=<your-client-secret>
+   ```
+
+### Jamf Protect
+
+1. Log in to your Jamf Protect tenant
+2. Navigate to **Administrative > API Clients**
+3. **Create an API Client**:
+   - Give it a name (e.g., "Jamf MCP")
+   - Note the **Client ID** and **Password**
+4. Set the environment variables:
+   ```
+   JAMF_PROTECT_URL=https://your-tenant.protect.jamfcloud.com/graphql
+   JAMF_PROTECT_CLIENT_ID=<your-client-id>
+   JAMF_PROTECT_PASSWORD=<your-password>
+   ```
+
+### Jamf Security Cloud
+
+1. Obtain RISK API credentials from your Jamf Security Cloud administrator
+2. Set the environment variables:
+   ```
+   JAMF_SECURITY_URL=https://radar.wandera.com
+   JAMF_SECURITY_APP_ID=<your-app-id>
+   JAMF_SECURITY_APP_SECRET=<your-app-secret>
+   ```
 
 ---
 

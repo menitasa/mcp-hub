@@ -225,30 +225,3 @@ async def jamf_update_printer(
         return format_error(e)
 
 
-@jamf_tool
-async def jamf_delete_printer(
-    printer_id: int,
-) -> str:
-    """Delete a printer from Jamf Pro.
-
-    Permanently removes a printer record by ID.
-
-    Args:
-        printer_id: ID of the printer to delete (required)
-
-    Returns:
-        JSON confirming the printer was deleted.
-    """
-    client, error = get_client_safe()
-    if error:
-        return error
-
-    try:
-        result = await client.classic_delete("printers", printer_id)
-        return format_response(result, f"Deleted printer ID {printer_id}")
-
-    except JamfAPIError as e:
-        return format_error(e)
-    except Exception as e:
-        logger.exception("Error deleting printer")
-        return format_error(e)
