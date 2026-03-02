@@ -1,3 +1,4 @@
+# Copyright 2026, Jamf Software LLC
 """Tool registry for Jamf MCP Server.
 
 This module provides a decorator-based registration system for MCP tools.

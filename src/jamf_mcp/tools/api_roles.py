@@ -1,3 +1,4 @@
+# Copyright 2026, Jamf Software LLC
 """API Role and Integration management tools for Jamf Pro.
 
 This module provides tools for creating API roles and API integrations (clients)

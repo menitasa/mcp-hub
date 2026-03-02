@@ -1,3 +1,4 @@
+# Copyright 2026, Jamf Software LLC
 """Location management tools for Jamf Pro.
 
 This module provides tools for retrieving buildings and departments

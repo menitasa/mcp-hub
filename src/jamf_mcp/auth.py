@@ -1,3 +1,4 @@
+# Copyright 2026, Jamf Software LLC
 """Authentication module for Jamf Pro API.
 
 Uses OAuth Client Credentials flow for authentication.

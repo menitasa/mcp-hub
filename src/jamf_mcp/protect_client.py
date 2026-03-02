@@ -1,3 +1,4 @@
+# Copyright 2026, Jamf Software LLC
 """Jamf Protect GraphQL API Client.
 
 Provides a client for interacting with Jamf Protect's GraphQL API.

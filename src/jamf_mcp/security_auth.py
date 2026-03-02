@@ -1,3 +1,4 @@
+# Copyright 2026, Jamf Software LLC
 """Authentication module for Jamf Security Cloud API.
 
 Uses HTTP Basic Auth to obtain a JWT token for the RISK API.

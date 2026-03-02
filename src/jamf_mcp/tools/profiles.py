@@ -1,3 +1,4 @@
+# Copyright 2026, Jamf Software LLC
 """Configuration profile management tools for Jamf Pro.
 
 This module provides tools for retrieving macOS and iOS/iPadOS/tvOS

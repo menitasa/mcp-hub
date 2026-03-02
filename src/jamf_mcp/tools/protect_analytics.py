@@ -1,3 +1,4 @@
+# Copyright 2026, Jamf Software LLC
 """Jamf Protect analytics tools."""
 
 import logging

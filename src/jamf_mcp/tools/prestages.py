@@ -1,3 +1,4 @@
+# Copyright 2026, Jamf Software LLC
 """PreStage enrollment management tools for Jamf Pro.
 
 This module provides tools for retrieving PreStage Enrollments which define

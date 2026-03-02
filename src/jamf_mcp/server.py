@@ -1,3 +1,4 @@
+# Copyright 2026, Jamf Software LLC
 """Jamf Pro MCP Server.
 
 Main entry point for the Model Context Protocol server that enables LLMs to

@@ -1,3 +1,4 @@
+# Copyright 2026, Jamf Software LLC
 """Prompts for the Jamf MCP Server."""
 
 def register_prompts(mcp):

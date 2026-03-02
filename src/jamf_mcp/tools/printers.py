@@ -1,3 +1,4 @@
+# Copyright 2026, Jamf Software LLC
 """Printer management tools for Jamf Pro.
 
 This module provides tools for managing printers in Jamf Pro.

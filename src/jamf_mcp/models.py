@@ -1,3 +1,4 @@
+# Copyright 2026, Jamf Software LLC
 """Pydantic models for Jamf Pro API data validation.
 
 These models are used for validating input data to MCP tools and

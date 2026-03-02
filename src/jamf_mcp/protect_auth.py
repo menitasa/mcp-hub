@@ -1,3 +1,4 @@
+# Copyright 2026, Jamf Software LLC
 """Authentication module for Jamf Protect API.
 
 Uses client credentials (client_id + password) for authentication.

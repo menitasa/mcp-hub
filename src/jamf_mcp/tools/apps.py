@@ -1,3 +1,4 @@
+# Copyright 2026, Jamf Software LLC
 """App and content management tools for Jamf Pro.
 
 This module provides tools for retrieving Mac apps, mobile device apps,

@@ -1,3 +1,4 @@
+# Copyright 2026, Jamf Software LLC
 """Jamf Pro MCP Tools.
 
 This package provides tools for interacting with Jamf Pro's API through
