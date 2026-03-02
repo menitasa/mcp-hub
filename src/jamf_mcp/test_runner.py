@@ -221,7 +221,7 @@ class JamfMCPTestRunner:
                 error=str(e)
             )
 
-    async def initialize_client(self) -> bool:
+    def initialize_client(self) -> bool:
         """Initialize the Jamf API client"""
         from .auth import JamfAuth
         from .client import JamfClient
@@ -1276,7 +1276,7 @@ class JamfMCPTestRunner:
         print(f"  Target: {os.environ.get('JAMF_PRO_URL', 'NOT SET')}")
 
         # Initialize client
-        if not await self.initialize_client():
+        if not self.initialize_client():
             print(f"\n{Colors.FAIL}Failed to initialize client. Check credentials.{Colors.ENDC}")
             return
 
@@ -1433,6 +1433,12 @@ class JamfMCPTestRunner:
         }
 
 
+def _write_json_report(report_file: str, report: dict):
+    """Write JSON report to file (runs in a thread via asyncio.to_thread)."""
+    with open(report_file, 'w') as f:
+        json.dump(report, f, indent=2)
+
+
 async def main():
     """Main entry point"""
     runner = JamfMCPTestRunner()
@@ -1441,8 +1447,7 @@ async def main():
     # Generate JSON report
     report = runner._generate_json_report()
     report_file = runner.log_file.replace('.log', '.json')
-    with open(report_file, 'w') as f:
-        json.dump(report, f, indent=2)
+    await asyncio.to_thread(_write_json_report, report_file, report)
     print(f"  JSON report: {report_file}")
 
 
