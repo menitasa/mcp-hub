@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Copyright 2026, Jamf Software LLC
 """
 Test Coverage Verification Script for Jamf MCP Server
 

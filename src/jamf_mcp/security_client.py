@@ -1,3 +1,4 @@
+# Copyright 2026, Jamf Software LLC
 """Jamf Security Cloud API Client.
 
 Provides an interface for the Jamf RISK API endpoints.

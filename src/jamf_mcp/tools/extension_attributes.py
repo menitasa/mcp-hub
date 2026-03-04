@@ -1,3 +1,4 @@
+# Copyright 2026, Jamf Software LLC
 """Extension attribute management tools for Jamf Pro.
 
 This module provides tools for retrieving and creating extension attributes

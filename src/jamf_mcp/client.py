@@ -1,3 +1,4 @@
+# Copyright 2026, Jamf Software LLC
 """Jamf Pro API Client.
 
 Provides a unified interface for both Classic API and Jamf Pro API (v1/v2).

@@ -1,3 +1,4 @@
+# Copyright 2026, Jamf Software LLC
 """App Installer management tools for Jamf Pro.
 
 This module provides tools for managing Jamf App Catalog titles and

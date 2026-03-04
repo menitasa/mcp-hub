@@ -1,3 +1,4 @@
+# Copyright 2026, Jamf Software LLC
 """Device risk management tools for Jamf Security Cloud.
 
 This module provides tools for retrieving and managing device risk status

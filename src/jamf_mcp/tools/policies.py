@@ -1,3 +1,4 @@
+# Copyright 2026, Jamf Software LLC
 """Policy management tools for Jamf Pro.
 
 This module provides tools for retrieving computer policies which define

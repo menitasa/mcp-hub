@@ -1,3 +1,4 @@
+# Copyright 2026, Jamf Software LLC
 """Common utilities for MCP tool implementations.
 
 This module provides shared functionality used by all tool modules including

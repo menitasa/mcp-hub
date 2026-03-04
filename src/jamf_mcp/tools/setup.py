@@ -1,3 +1,4 @@
+# Copyright 2026, Jamf Software LLC
 """Setup and onboarding tools for Jamf MCP Server.
 
 This module provides tools for checking configuration status and getting

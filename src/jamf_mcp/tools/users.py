@@ -1,3 +1,4 @@
+# Copyright 2026, Jamf Software LLC
 """User management tools for Jamf Pro.
 
 This module provides tools for retrieving and updating user records
