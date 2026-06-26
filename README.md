@@ -37,7 +37,7 @@ See [Installation](docs/INSTALLATION.md) for full configuration details.
 | Product                 | Tools | Description                                                            |
 | ----------------------- | ----- | ---------------------------------------------------------------------- |
 | **Setup**               | 2     | Onboarding tools (always available, no credentials needed)             |
-| **Jamf Pro**            | 40    | Device management, groups, policies, profiles, apps, scripts, printers |
+| **Jamf Pro**            | 42    | Device management, groups, policies, profiles, apps, scripts, printers |
 | **Jamf Protect**        | 6     | Security alerts, enrolled computers, analytics (detection rules)       |
 | **Jamf Security Cloud** | 2     | Device risk status and overrides via RISK API                          |
 
