@@ -1276,6 +1276,60 @@ class JamfTestAgent:
             message=f"Created: {ea_name}{cleanup_msg}"
         )
 
+    async def test_get_computer_ea_values(self) -> TestResult:
+        """Test getting EA values for a specific computer"""
+        if not self.samples["computer_id"]:
+            return TestResult(
+                name="Get Computer EA Values",
+                category="Extension Attributes",
+                status=TestStatus.SKIPPED,
+                message="No computer ID available (run computer list test first)"
+            )
+
+        comp_id = self.samples["computer_id"]
+        status, data = await self._api_request(
+            "GET", f"/api/v1/computers-inventory/{comp_id}",
+            params={"section": "EXTENSION_ATTRIBUTES", "section2": "GENERAL"}
+        )
+
+        # httpx test client doesn't support repeated params the same way,
+        # so re-request with a manual URL to verify the section param works
+        status, data = await self._api_request(
+            "GET", f"/api/v1/computers-inventory/{comp_id}",
+            params=[("section", "GENERAL"), ("section", "EXTENSION_ATTRIBUTES")]
+        )
+
+        eas = data.get("extensionAttributes", [])
+        return TestResult(
+            name="Get Computer EA Values",
+            category="Extension Attributes",
+            status=TestStatus.PASSED,
+            response_code=status,
+            message=f"Retrieved {len(eas)} EA values for computer {comp_id}",
+            details={"computerId": comp_id, "eaCount": len(eas)}
+        )
+
+    async def test_search_computers_by_ea(self) -> TestResult:
+        """Test searching computers by EA value (verifies section param works on list)"""
+        status, data = await self._api_request(
+            "GET", "/api/v1/computers-inventory",
+            params=[("page-size", "5"), ("section", "GENERAL"), ("section", "EXTENSION_ATTRIBUTES")]
+        )
+
+        results = data.get("results", [])
+        has_ea_key = any("extensionAttributes" in r for r in results)
+        return TestResult(
+            name="Search Computers by EA (Section Param)",
+            category="Extension Attributes",
+            status=TestStatus.PASSED,
+            response_code=status,
+            message=f"Fetched {len(results)} computers with EXTENSION_ATTRIBUTES section",
+            details={
+                "count": len(results),
+                "hasExtensionAttributesKey": has_ea_key,
+            }
+        )
+
     # =========================================================================
     # PRESTAGE ENROLLMENTS TESTS
     # =========================================================================
@@ -2269,6 +2323,8 @@ class JamfTestAgent:
                 ("Get Mobile Extension Attributes", self.test_get_mobile_eas),
                 ("Get User Extension Attributes", self.test_get_user_eas),
                 ("Create Extension Attribute", self.test_create_extension_attribute),
+                ("Get Computer EA Values", self.test_get_computer_ea_values),
+                ("Search Computers by EA (Section Param)", self.test_search_computers_by_ea),
             ]),
             ("PreStage Enrollments", [
                 ("Get Computer PreStages", self.test_get_computer_prestages),

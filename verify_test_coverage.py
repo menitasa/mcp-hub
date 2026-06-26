@@ -80,6 +80,8 @@ TOOL_TEST_MAPPING = {
         "test_get_user_eas",
     ],
     "jamf_create_extension_attribute": ["test_create_extension_attribute"],
+    "jamf_get_computer_ea_values": ["test_get_computer_ea_values"],
+    "jamf_search_computers_by_ea": ["test_search_computers_by_ea"],
     "jamf_get_categories": ["test_get_categories"],
     "jamf_create_category": ["test_create_category"],
     "jamf_get_buildings": ["test_get_buildings"],

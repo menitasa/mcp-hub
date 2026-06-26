@@ -72,6 +72,7 @@ async def jamf_get_computer(
     name: Optional[str] = None,
     page: int = 0,
     page_size: int = 100,
+    sections: Optional[list[str]] = None,
 ) -> str:
     """Get computer information from Jamf Pro.
 
@@ -79,24 +80,41 @@ async def jamf_get_computer(
     You can search by ID, serial number, or name. If no identifier is provided,
     returns a paginated list of all computers.
 
+    By default returns GENERAL, HARDWARE, USER_AND_LOCATION, and EXTENSION_ATTRIBUTES
+    sections. Use the sections parameter to request only what you need or to add
+    additional sections.
+
     Args:
         computer_id: Jamf Pro computer ID to retrieve specific device
         serial_number: Computer serial number to search for exact match
         name: Computer name to search for (supports partial matches with wildcards)
         page: Page number for pagination (0-indexed, default: 0)
         page_size: Number of results per page (default: 100, max: 2000)
+        sections: Inventory sections to include. Defaults to
+            ["GENERAL", "HARDWARE", "USER_AND_LOCATION", "EXTENSION_ATTRIBUTES"].
+            Available sections: GENERAL, DISK_ENCRYPTION, PURCHASING, APPLICATIONS,
+            STORAGE, USER_AND_LOCATION, CONFIGURATION_PROFILES, PRINTERS, SERVICES,
+            HARDWARE, LOCAL_USER_ACCOUNTS, CERTIFICATES, ATTACHMENTS, PLUGINS,
+            PACKAGE_RECEIPTS, FONTS, SECURITY, OPERATING_SYSTEM, LICENSED_SOFTWARE,
+            IBEACONS, SOFTWARE_UPDATES, EXTENSION_ATTRIBUTES, CONTENT_CACHING,
+            GROUP_MEMBERSHIPS.
 
     Returns:
         JSON containing computer details or list of computers with inventory data
-        including hardware, software, and management information.
+        including hardware, software, extension attribute values, and management
+        information.
     """
     client, error = get_client_safe()
     if error:
         return error
 
+    active_sections = sections or ["GENERAL", "HARDWARE", "USER_AND_LOCATION", "EXTENSION_ATTRIBUTES"]
+
     try:
         if computer_id:
-            result = await client.v1_get(f"computers-inventory/{computer_id}")
+            result = await client.get_computer_inventory(
+                computer_id=computer_id, section=active_sections
+            )
             return format_response(result, f"Retrieved computer ID {computer_id}")
 
         filters = []
@@ -105,7 +123,7 @@ async def jamf_get_computer(
         if name:
             filters.append(f'general.name=="{name}*"')
 
-        params = {"page": page, "page-size": page_size}
+        params: dict = {"page": page, "page-size": page_size, "section": active_sections}
         if filters:
             params["filter"] = " and ".join(filters)
 

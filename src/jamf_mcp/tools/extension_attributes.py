@@ -3,6 +3,11 @@
 
 This module provides tools for retrieving and creating extension attributes
 which define custom inventory fields for computers, mobile devices, and users.
+
+Distinction between tools:
+  - jamf_get_extension_attributes  : EA *definitions* (schema, data type, script)
+  - jamf_get_computer_ea_values    : EA *values* on a specific computer
+  - jamf_search_computers_by_ea    : Find computers where an EA matches a value
 """
 
 import logging
@@ -199,4 +204,153 @@ async def jamf_create_extension_attribute(
         return format_error(e)
     except Exception as e:
         logger.exception("Error creating extension attribute")
+        return format_error(e)
+
+
+@jamf_tool
+async def jamf_get_computer_ea_values(
+    computer_id: int,
+    ea_name: Optional[str] = None,
+) -> str:
+    """Get extension attribute values for a specific computer.
+
+    Returns the actual EA values collected from a computer's last inventory
+    check — not the EA definitions. Each entry shows the EA name, definition
+    ID, and the current value reported by the device.
+
+    Use jamf_get_extension_attributes to inspect EA definitions (data type,
+    script contents, input type). Use this tool to read what a device
+    actually reported.
+
+    Args:
+        computer_id: Jamf Pro computer ID (required)
+        ea_name: Optional filter — return only EAs whose name contains this
+            string (case-insensitive). Omit to return all EA values.
+
+    Returns:
+        JSON list of extension attribute values with name, definitionId, and
+        current value for the specified computer.
+    """
+    client, error = get_client_safe()
+    if error:
+        return error
+
+    try:
+        result = await client.get_computer_inventory(
+            computer_id=computer_id,
+            section=["GENERAL", "EXTENSION_ATTRIBUTES"],
+        )
+
+        computer_name = result.get("general", {}).get("name", f"ID {computer_id}")
+        raw_eas = result.get("extensionAttributes", [])
+
+        if ea_name:
+            raw_eas = [
+                ea for ea in raw_eas
+                if ea_name.lower() in ea.get("name", "").lower()
+            ]
+
+        ea_values = [
+            {
+                "name": ea.get("name"),
+                "definitionId": ea.get("definitionId"),
+                "value": ea.get("values", [None])[0] if ea.get("values") else None,
+            }
+            for ea in raw_eas
+        ]
+
+        return format_response(
+            {"computer": computer_name, "computerId": computer_id, "extensionAttributes": ea_values},
+            f"Retrieved {len(ea_values)} EA values for {computer_name}",
+        )
+
+    except JamfAPIError as e:
+        return format_error(e)
+    except Exception as e:
+        logger.exception("Error getting computer EA values")
+        return format_error(e)
+
+
+@jamf_tool
+async def jamf_search_computers_by_ea(
+    ea_name: str,
+    ea_value: str,
+    page: int = 0,
+    page_size: int = 100,
+) -> str:
+    """Find computers where a specific extension attribute matches a value.
+
+    Fetches computers with extension attribute data and filters for devices
+    where the named EA contains the specified value (case-insensitive partial
+    match). Returns computer name, ID, serial number, and the matched EA value.
+
+    Useful for investigations — e.g., find all Macs where "FileVault Status"
+    is "Off", or where a custom compliance EA equals "Non-Compliant".
+
+    Args:
+        ea_name: Extension attribute name to match against (case-insensitive,
+            partial match supported). Example: "FileVault Status"
+        ea_value: Value to search for (case-insensitive, partial match).
+            Example: "Off" or "Non-Compliant"
+        page: Page number for pagination (0-indexed, default: 0)
+        page_size: Number of computers to fetch per page (default: 100, max: 2000)
+
+    Returns:
+        JSON with list of matching computers, total match count, and the
+        matched EA name/value for each result.
+    """
+    client, error = get_client_safe()
+    if error:
+        return error
+
+    try:
+        params: dict = {
+            "page": page,
+            "page-size": page_size,
+            "section": ["GENERAL", "HARDWARE", "EXTENSION_ATTRIBUTES"],
+        }
+        result = await client.v1_get("computers-inventory", params=params)
+        computers = result.get("results", [])
+        total_fetched = result.get("totalCount", len(computers))
+
+        matches = []
+        for computer in computers:
+            general = computer.get("general", {})
+            hardware = computer.get("hardware", {})
+            for ea in computer.get("extensionAttributes", []):
+                if ea_name.lower() not in ea.get("name", "").lower():
+                    continue
+                value = ea.get("values", [None])[0] if ea.get("values") else None
+                if value is not None and ea_value.lower() in str(value).lower():
+                    matches.append({
+                        "id": computer.get("id"),
+                        "name": general.get("name"),
+                        "serialNumber": hardware.get("serialNumber"),
+                        "matchedEa": {
+                            "name": ea.get("name"),
+                            "definitionId": ea.get("definitionId"),
+                            "value": value,
+                        },
+                    })
+                    break  # one match per computer is enough
+
+        return format_response(
+            {
+                "matches": matches,
+                "matchCount": len(matches),
+                "totalComputersScanned": len(computers),
+                "totalComputersInJamf": total_fetched,
+                "searchCriteria": {"ea_name": ea_name, "ea_value": ea_value, "page": page},
+                "_note": (
+                    "Filtered from the fetched page only. "
+                    "Increment 'page' to search additional computers."
+                ) if total_fetched > len(computers) else None,
+            },
+            f"Found {len(matches)} computers where '{ea_name}' matches '{ea_value}'",
+        )
+
+    except JamfAPIError as e:
+        return format_error(e)
+    except Exception as e:
+        logger.exception("Error searching computers by EA value")
         return format_error(e)
