@@ -144,6 +144,10 @@ async def jamf_lifespan(server: FastMCP):
     if not config_status["security_configured"]:
         logger.info("Jamf Security Cloud not configured (set JAMF_SECURITY_* env vars to enable)")
 
+    # Pre-warm OAuth token so the first tool call has no cold-start delay
+    if client:
+        await client.warm_up()
+
     _log_startup_mode(products_configured)
     logger.info("Starting Jamf MCP Server v%s", __version__)
 

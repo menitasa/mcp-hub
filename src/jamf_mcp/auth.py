@@ -5,6 +5,7 @@ Uses OAuth Client Credentials flow for authentication.
 The module handles automatic token refresh when tokens expire.
 """
 
+import asyncio
 import logging
 import os
 import time
@@ -58,6 +59,7 @@ class JamfAuth:
         """
         self.base_url = base_url.rstrip("/")
         self._token: Optional[TokenInfo] = None
+        self._lock = asyncio.Lock()
 
         if not client_id or not client_secret:
             raise JamfAuthError(
@@ -113,9 +115,12 @@ class JamfAuth:
         Raises:
             JamfAuthError: If token acquisition fails
         """
-        if self._token is None or self._token.is_expired:
-            await self._refresh_token(client)
-
+        if self._token is not None and not self._token.is_expired:
+            return self._token.access_token
+        async with self._lock:
+            # Re-check after acquiring lock — another coroutine may have refreshed already
+            if self._token is None or self._token.is_expired:
+                await self._refresh_token(client)
         return self._token.access_token
 
     async def _refresh_token(self, client: httpx.AsyncClient) -> None:

@@ -10,7 +10,7 @@ import logging
 import os
 from typing import Any, Optional, TYPE_CHECKING, Tuple
 
-from ..client import JamfAPIError, JamfClient
+from ..client import JamfAPIError, JamfClient, JamfRateLimitError
 from ..protect_client import ProtectAPIError, ProtectClient
 
 if TYPE_CHECKING:
@@ -272,7 +272,15 @@ def format_error(error: Exception, max_detail_size: int = 2000) -> str:
         JSON formatted error response string
     """
     error_data = {"success": False, "error": str(error)}
-    if isinstance(error, JamfAPIError):
+    if isinstance(error, JamfRateLimitError):
+        error_data["status_code"] = 429
+        error_data["retry_after_seconds"] = error.retry_after
+        error_data["hint"] = (
+            f"Jamf API rate limit hit. Wait {error.retry_after}s before retrying."
+            if error.retry_after is not None
+            else "Jamf API rate limit hit. Wait before retrying."
+        )
+    elif isinstance(error, JamfAPIError):
         error_data["status_code"] = error.status_code
         if error.response_body:
             try:

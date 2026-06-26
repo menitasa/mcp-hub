@@ -48,7 +48,10 @@ class TestMethod(NamedTuple):
 # Mapping of MCP tools to their corresponding test(s)
 # This defines what tests cover each tool
 TOOL_TEST_MAPPING = {
-    "jamf_get_computer": ["test_get_computers_list", "test_get_computer_detail"],
+    "jamf_get_computer": ["test_get_computers_list", "test_get_computer_detail", "test_get_computer_by_username"],
+    "jamf_get_computers_not_checked_in": ["test_get_computers_not_checked_in"],
+    "jamf_get_os_summary": ["test_get_os_summary"],
+    "jamf_search_computers_by_app": ["test_search_computers_by_app"],
     "jamf_update_computer": ["test_computer_update_endpoint"],
     "jamf_get_mobile_device": ["test_get_mobile_devices_list", "test_get_mobile_device_detail"],
     "jamf_update_mobile_device": ["test_mobile_device_update_endpoint"],
