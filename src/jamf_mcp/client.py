@@ -75,6 +75,17 @@ class JamfAPIError(Exception):
         self.response_body = response_body
 
 
+class JamfRateLimitError(JamfAPIError):
+    """Raised when the Jamf API returns HTTP 429 Too Many Requests."""
+
+    def __init__(self, retry_after: Optional[int] = None):
+        msg = "Jamf API rate limit exceeded"
+        if retry_after is not None:
+            msg += f" — retry after {retry_after}s"
+        super().__init__(msg, status_code=429)
+        self.retry_after = retry_after
+
+
 class JamfClient:
     """Client for interacting with Jamf Pro APIs.
 
@@ -118,7 +129,15 @@ class JamfClient:
             httpx.AsyncClient instance
         """
         if self._client is None:
-            self._client = httpx.AsyncClient(timeout=self.timeout)
+            self._client = httpx.AsyncClient(
+                timeout=self.timeout,
+                headers={"Accept-Encoding": "gzip, deflate, br"},
+                limits=httpx.Limits(
+                    max_keepalive_connections=10,
+                    max_connections=20,
+                    keepalive_expiry=30,
+                ),
+            )
 
         try:
             yield self._client
@@ -132,6 +151,15 @@ class JamfClient:
                 await self.auth.invalidate_token(client)
             await self._client.aclose()
             self._client = None
+
+    async def warm_up(self) -> None:
+        """Pre-fetch an OAuth token so the first tool call has no cold-start delay."""
+        async with self._get_client() as client:
+            try:
+                await self.auth.get_token(client)
+                logger.debug("Connection pre-warmed")
+            except Exception as e:
+                logger.warning("Pre-warm failed (will retry on first request): %s", e)
 
     async def _get_headers(self, client: httpx.AsyncClient, accept: str = "application/json") -> dict:
         """Get request headers with authentication.
@@ -195,22 +223,23 @@ class JamfClient:
                     response.status_code,
                 )
 
+                if response.status_code == 429:
+                    retry_after_header = response.headers.get("Retry-After")
+                    retry_after = int(retry_after_header) if retry_after_header and retry_after_header.isdigit() else None
+                    raise JamfRateLimitError(retry_after=retry_after)
+
                 response.raise_for_status()
 
-                # Try to parse JSON, fall back to text
-                # Note: Classic API may return JSON with text/plain content-type
-                content_type = response.headers.get("content-type", "")
-                if content_type.startswith("application/json"):
+                # Parse response: JSON if possible, fall back to text.
+                # Classic API may return JSON with text/plain content-type,
+                # so we always attempt JSON first regardless of content-type.
+                text = response.text
+                if not text:
+                    return {}
+                try:
                     return response.json()
-
-                # Try parsing as JSON even for other content types (e.g., text/plain)
-                if response.text:
-                    try:
-                        return response.json()
-                    except Exception:
-                        pass
-
-                return response.text
+                except Exception:
+                    return text
 
             except httpx.HTTPStatusError as e:
                 error_body = e.response.text

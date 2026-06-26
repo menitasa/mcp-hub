@@ -658,6 +658,49 @@ class JamfTestAgent:
             details={"id": comp_id, "name": name}
         )
 
+    async def test_get_computer_by_username(self) -> TestResult:
+        """Test searching for a computer by macOS username"""
+        # Use the username of the first computer found in the list test
+        username = None
+        status, data = await self._api_request(
+            "GET", "/api/v1/computers-inventory",
+            params={"page-size": 5, "section": ["GENERAL"]}
+        )
+        for result in data.get("results", []):
+            candidate = result.get("general", {}).get("lastLoggedInUsernameBinary")
+            if candidate:
+                username = candidate
+                break
+
+        if not username:
+            return TestResult(
+                name="Get Computer (By Username)",
+                category="Computers",
+                status=TestStatus.SKIPPED,
+                message="No username found in computer list to search with"
+            )
+
+        filter_str = f'general.lastLoggedInUsernameBinary=="{username}"'
+        status, data = await self._api_request(
+            "GET", "/api/v1/computers-inventory",
+            params={"page-size": 10, "section": ["GENERAL"], "filter": filter_str}
+        )
+
+        results = data.get("results", [])
+        matched = any(
+            r.get("general", {}).get("lastLoggedInUsernameBinary") == username
+            for r in results
+        )
+
+        return TestResult(
+            name="Get Computer (By Username)",
+            category="Computers",
+            status=TestStatus.PASSED if matched else TestStatus.FAILED,
+            response_code=status,
+            message=f"Found {len(results)} computer(s) for username '{username}'",
+            details={"username": username, "matched": matched}
+        )
+
     async def test_computer_update_endpoint(self) -> TestResult:
         """Test computer update endpoint accessibility"""
         if not self.samples["computer_id"]:
@@ -680,6 +723,89 @@ class JamfTestAgent:
             status=TestStatus.PASSED,
             response_code=status,
             message="Update endpoint accessible (dry-run)"
+        )
+
+    async def test_get_computers_not_checked_in(self) -> TestResult:
+        """Test finding computers that haven't checked in for 30+ days"""
+        status, data = await self._api_request(
+            "GET", "/api/v1/computers-inventory",
+            params={
+                "page-size": 10,
+                "section": ["GENERAL", "HARDWARE"],
+                "filter": 'general.lastContactTime=lt="2099-01-01T00:00:00Z"',
+                "sort": "general.lastContactTime:asc",
+            }
+        )
+
+        results = data.get("results", [])
+        total = data.get("totalCount", len(results))
+        return TestResult(
+            name="Get Computers Not Checked In",
+            category="Computers",
+            status=TestStatus.PASSED,
+            response_code=status,
+            message=f"Query succeeded, {total} total results with lastContactTime filter",
+            details={"count": len(results), "total": total}
+        )
+
+    async def test_get_os_summary(self) -> TestResult:
+        """Test fetching computers with OPERATING_SYSTEM section for OS summary"""
+        status, data = await self._api_request(
+            "GET", "/api/v1/computers-inventory",
+            params={"page-size": 10, "section": ["OPERATING_SYSTEM", "GENERAL"]}
+        )
+
+        results = data.get("results", [])
+        has_os_key = any("operatingSystem" in r for r in results)
+        versions = [
+            r["operatingSystem"].get("version")
+            for r in results
+            if r.get("operatingSystem")
+        ]
+        return TestResult(
+            name="OS Summary (Section Param)",
+            category="Computers",
+            status=TestStatus.PASSED if has_os_key else TestStatus.WARNING,
+            response_code=status,
+            message=f"Fetched {len(results)} computers with OPERATING_SYSTEM section",
+            details={
+                "hasOperatingSystemKey": has_os_key,
+                "sampleVersions": list(set(versions))[:5],
+            }
+        )
+
+    async def test_search_computers_by_app(self) -> TestResult:
+        """Test finding computers with a specific app via Classic API"""
+        try:
+            status, data = await self._api_request(
+                "GET", "/JSSResource/computerapplications/application/Safari"
+            )
+        except RuntimeError as e:
+            if "401" in str(e):
+                return TestResult(
+                    name="Search Computers by App",
+                    category="Computers",
+                    status=TestStatus.SKIPPED,
+                    message="Requires 'Read Computer Application Usage' privilege in API role",
+                )
+            raise
+
+        unique_raw = data.get("unique_computers") or {}
+        computers = unique_raw.get("computer") or []
+        if isinstance(computers, dict):
+            computers = [computers]
+        versions_raw = data.get("versions") or {}
+        version_list = versions_raw.get("version") or []
+        if isinstance(version_list, dict):
+            version_list = [version_list]
+
+        return TestResult(
+            name="Search Computers by App",
+            category="Computers",
+            status=TestStatus.PASSED,
+            response_code=status,
+            message=f"Found {len(computers)} computer(s) with Safari, {len(version_list)} version(s)",
+            details={"totalComputers": len(computers), "versionCount": len(version_list)}
         )
 
     # =========================================================================
@@ -2273,7 +2399,11 @@ class JamfTestAgent:
             ("Computers", [
                 ("Get Computers (List)", self.test_get_computers_list),
                 ("Get Computer (Detail)", self.test_get_computer_detail),
+                ("Get Computer (By Username)", self.test_get_computer_by_username),
                 ("Update Computer (Verify)", self.test_computer_update_endpoint),
+                ("Get Computers Not Checked In", self.test_get_computers_not_checked_in),
+                ("OS Summary (Section Param)", self.test_get_os_summary),
+                ("Search Computers by App", self.test_search_computers_by_app),
             ]),
             ("Mobile Devices", [
                 ("Get Mobile Devices (List)", self.test_get_mobile_devices_list),
